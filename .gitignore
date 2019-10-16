@@ -1,0 +1,9 @@
+/.idea
+/.vscode
+/vendor
+/vendor.bak
+*.log
+thinkphp
+.env
+.DS_Store
+.composer.lock
