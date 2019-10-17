@@ -4,9 +4,17 @@ namespace app\index\controller\rabbitmq;
 use app\index\controller\BaseController;
 use app\index\service\rabbitmq\Rabbit;
 
+/**
+ * 写入队列
+ * Class Index
+ * @package app\index\controller\rabbitmq
+ */
 class Index extends BaseController
 {
-    //实时写入到rabbitmq
+    /**
+     * 实时写入到rabbitmq
+     * @return string
+     */
     public function mqPush()
     {
 
@@ -24,7 +32,7 @@ class Index extends BaseController
             ];
             $arr = json_encode($arr);
 
-            $res = Rabbit::pushMessage($arr,$config);
+            $res = app(Rabbit::class)->pushMessage($arr,$config);
 
         }
 
