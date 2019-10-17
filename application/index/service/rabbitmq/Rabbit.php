@@ -20,7 +20,7 @@ class Rabbit extends BaseService
     {
         //连接配置
         $host_config = config('rabbitmq.rabbitmq');
-        $this->connection == new AMQPStreamConnection(
+        $this->connection = new AMQPStreamConnection(
             $host_config['Host'],
             $host_config['Port'],
             $host_config['User'],
@@ -28,6 +28,7 @@ class Rabbit extends BaseService
             $host_config['Vhost']
         );
         $this->channel = $this->connection->channel();
+
     }
 
     /**
@@ -39,7 +40,6 @@ class Rabbit extends BaseService
     public function pushMessage($data,$config)
     {
         try {
-
             $this->channel->queue_declare($config['queue'],false,true,false,false);
             $this->channel->exchange_declare($config['exchange'],'direct',false,true,false);
             $this->channel->queue_bind($config['queue'],$config['exchange'],$config['route_key']);
@@ -52,11 +52,8 @@ class Rabbit extends BaseService
                     'delivery_mode'=>AMQPMessage::DELIVERY_MODE_PERSISTENT
                 ]
             );
-
             $this->channel->basic_publish($message,$config['exchange'],$config['route_key']);
-            $this->channel->close();
-            $this->connection->close();
-            return 'ok';
+            return true;
         } catch (AMQPChannelClosedException $e) {
             echo 'AMQPCONNECTION:'.$e->getMessage();
             exit;
@@ -77,6 +74,7 @@ class Rabbit extends BaseService
      */
     public function start($config)
     {
+
         $this->channel->queue_declare($config['queue'],false,true,false,false);
         $this->channel->exchange_declare($config['exchange'],'direct',false,true,false);
         $this->channel->queue_bind($config['queue'],$config['exchange'],$config['route_key']);
@@ -91,7 +89,7 @@ class Rabbit extends BaseService
             [$this,'process_message']
         );
 
-        register_shutdown_function([$this,'shutdown'],$this->channel,$this->connection);
+        register_shutdown_function([$this,'shutdown']);
         while (count($this->channel->callbacks)) {
             $this->channel->wait();
         }
@@ -123,9 +121,9 @@ class Rabbit extends BaseService
      * @param $channel
      * @param $connection
      */
-    protected function shutdown($channel, $connection)
+    public function shutdown()
     {
-        $channel->close();
-        $connection->closse();
+        $this->channel->close();
+        $this->connection->close();
     }
 }

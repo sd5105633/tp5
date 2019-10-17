@@ -33,8 +33,8 @@ class Index extends BaseController
             $arr = json_encode($arr);
 
             $res = app(Rabbit::class)->pushMessage($arr,$config);
-
         }
+        app(Rabbit::class )->shutdown();
 
         return '执行完毕';
     }
