@@ -2,6 +2,7 @@
 /.vscode
 /vendor
 /vendor.bak
+/runtime
 *.log
 thinkphp
 .env
