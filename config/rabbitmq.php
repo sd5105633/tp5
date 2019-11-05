@@ -4,7 +4,7 @@
 return [
     'rabbitmq'=>[
 
-        'Host'=>'192.168.1.152',
+        'Host'=>'192.168.1.156',
         'Port'=>'5672',
         'User'=>'admin',
         'Pass'=>'admin',
