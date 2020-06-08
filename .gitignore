@@ -2,8 +2,9 @@
 /.vscode
 /vendor
 /vendor.bak
+/runtime
 *.log
 thinkphp
 .env
 .DS_Store
-.composer.lock
+/composer.lock
