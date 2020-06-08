@@ -1,5 +1,5 @@
 <?php
-namespace app\index\repository\rabbimq;
+namespace app\index\repository\rabbitmq;
 
 use app\index\repository\BaseRep;
 use app\index\model\QueuePush as QueModel;
@@ -11,8 +11,14 @@ class QueuePush extends BaseRep
      * @param $data
      * @return mixed
      */
-    public function insert($data)
+    public function insert(array $data): int
     {
         return app(QueModel::class)->insert($data);
+    }
+
+
+    public function update(array $data,array $where): bool
+    {
+        return app(QueModel::class)->where($where)->update($data);
     }
 }

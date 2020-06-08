@@ -4,9 +4,12 @@ namespace app\index\service\rabbitmq;
 use app\index\service\BaseService;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Exception\AMQPChannelClosedException;
+use PhpAmqpLib\Exception\AMQPBasicCancelException;
+use PhpAmqpLib\Exception\AMQPConnectionClosedException;
+use PhpAmqpLib\Exception\AMQPIOException;
 use PhpAmqpLib\Message\AMQPMessage;
+use app\index\repository\rabbitmq\QueuePush as RepQuePush;
 use think\Exception;
-use think\exception\ErrorException;
 
 class Rabbit extends BaseService
 {
@@ -18,16 +21,7 @@ class Rabbit extends BaseService
      */
     public function initialize()
     {
-        //连接配置
-        $host_config = config('rabbitmq.rabbitmq');
-        $this->connection = new AMQPStreamConnection(
-            $host_config['Host'],
-            $host_config['Port'],
-            $host_config['User'],
-            $host_config['Pass'],
-            $host_config['Vhost']
-        );
-        $this->channel = $this->connection->channel();
+        register_shutdown_function([$this,'shutdown']);
 
     }
 
@@ -39,7 +33,25 @@ class Rabbit extends BaseService
      */
     public function pushMessage($data,$config)
     {
+
         try {
+            $params = [];
+            $params['content']= $data;
+            $params['create_at']= time();
+            $params['create_datetime']= date('Y-m-d H:i:s');
+            $params['status']= 1;
+            $id = app(RepQuePush::class)->insert($params);
+            //连接配置
+            $host_config = config('rabbitmq.rabbitmq');
+            $this->connection = new AMQPStreamConnection(
+                $host_config['Host'],
+                $host_config['Port'],
+                $host_config['User'],
+                $host_config['Pass'],
+                $host_config['Vhost']
+            );
+            $this->channel = $this->connection->channel();
+
             $this->channel->queue_declare($config['queue'],false,true,false,false);
             $this->channel->exchange_declare($config['exchange'],'direct',false,true,false);
             $this->channel->queue_bind($config['queue'],$config['exchange'],$config['route_key']);
@@ -53,15 +65,29 @@ class Rabbit extends BaseService
                 ]
             );
             $this->channel->basic_publish($message,$config['exchange'],$config['route_key']);
+
+            $where['id'] = $id;
+            $update['update_at'] = time();
+            $update['update_datetime'] = date('Y-m-d H:i:s');
+            $res = app(RepQuePush::class)->insert($update,$where);
+
             return true;
-        } catch (AMQPChannelClosedException $e) {
+        } catch (AMQPProtocolException $e){
+            echo 'THINK:'.$e->getMessage();
+            exit;
+        }catch (AMQPChannelClosedException $e) {
             echo 'AMQPCONNECTION:'.$e->getMessage();
             exit;
-        } catch (ErrorException $e){
-            echo 'THINK:'.$e->getMessage();
+        }  catch (AMQPConnectionClosedException $e){
+            echo 'AMQPCONNECTION:'.$e->getMessage();
             exit;
-        } catch (Exception $e){
-            echo 'THINK:'.$e->getMessage();
+        } catch (\Exception $e){
+            header("content-type:text/html;charset=gbk");
+            echo 'Exception111:'.$e->getMessage();
+            exit;
+        }catch (AMQPIOException $e){
+            header("content-type:text/html;charset=gbk");
+            echo 'AMQPCONNECTION333:'.$e->getMessage();
             exit;
         }
 
@@ -121,9 +147,16 @@ class Rabbit extends BaseService
      * @param $channel
      * @param $connection
      */
-    public function shutdown()
-    {
-        $this->channel->close();
-        $this->connection->close();
+    public function shutdown(){
+
+        echo "------------------<br>";
+        echo '123123';
+        if(is_object($this->channel)){
+            $this->channel->close();
+        }
+        if(is_object($this->connection)){
+            $this->connection->close();
+        }
+
     }
 }

@@ -17,14 +17,13 @@ class Index extends BaseController
      */
     public function mqPush()
     {
-
         $config=[
             'exchange'=>'exchange_test1',
             'queue'=>'queue_test1',
             'route_key'=>'route_test1',
         ];
 
-        for ($i = 0; $i < 10; $i++) {
+        for ($i = 10; $i < 20; $i++) {
             $arr = [
                 'name'=>'qicheng'.$i,
                 'sex'=>'male',
@@ -33,6 +32,7 @@ class Index extends BaseController
             $arr = json_encode($arr);
 
             $res = app(Rabbit::class)->pushMessage($arr,$config);
+            usleep(100);
         }
         app(Rabbit::class )->shutdown();
 

@@ -14,6 +14,7 @@ Route::get('think', function () {
 });
 
 Route::get('hello/:name', 'index/hello');
+Route::get('rabbitmq/push', 'rabbitmq.Index/mqPush');
 
 return [
 
